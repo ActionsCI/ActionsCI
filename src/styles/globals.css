@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+:root {
+  --bg:        #0a0a0a;
+  --surface:   #111111;
+  --border:    #1f1f1f;
+  --accent:    #00ff88;
+  --accent-2:  #ff6b35;
+  --text:      #f0f0f0;
+  --muted:     #6b6b6b;
+  --code-bg:   #0d1117;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Space Mono', monospace;
+}
+
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Dot grid texture for hero */
+.dot-grid {
+  background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Terminal glow */
+.terminal-glow {
+  box-shadow: 0 0 30px rgba(0, 255, 136, 0.15), 0 0 60px rgba(0, 255, 136, 0.05);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+/* Cursor blink animation */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.cursor-blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* Scroll bounce */
+@keyframes bounce-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(8px); }
+}
+
+.bounce-y {
+  animation: bounce-y 1.5s ease-in-out infinite;
+}
+
+/* Draw line animation */
+@keyframes draw-line {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+/* Step connector line */
+.step-line-animate {
+  animation: draw-line 1s ease-out forwards;
+}
+
+/* Accent text */
+.text-accent {
+  color: var(--accent);
+}
+
+.text-accent-2 {
+  color: var(--accent-2);
+}
+
+/* Surface backgrounds */
+.bg-surface {
+  background-color: var(--surface);
+}
+
+.border-custom {
+  border-color: var(--border);
+}
