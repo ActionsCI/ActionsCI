@@ -1,0 +1,14 @@
+name: Version Incrementor
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  version:
+    uses: ActionsCI/reusable-workflows/.github/workflows/version-incrementor.yaml
+    secrets: inherit
