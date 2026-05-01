@@ -33,7 +33,7 @@ on:
 
 jobs:
   deploy:
-    uses: ActionsCI/reusable-workflows/.github/workflows/build-eks.yaml@main
+    uses: ActionsCI/reusable-workflows/.github/workflows/build-eks.yaml
     secrets: inherit
     with:
       environment: production`

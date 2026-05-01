@@ -56,7 +56,7 @@ export default function WorkflowCard({ name, description, calls, example, delay 
               className="text-xs font-mono block px-3 py-2 rounded"
               style={{ background: 'var(--code-bg)', color: 'var(--accent)', border: '1px solid var(--border)' }}
             >
-              uses: ActionsCI/reusable-workflows/.github/workflows/{name}@main
+              uses: ActionsCI/reusable-workflows/.github/workflows/{name}
             </code>
           </div>
         )}

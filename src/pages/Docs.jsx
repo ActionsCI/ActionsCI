@@ -25,7 +25,7 @@ on:
     branches: [main]
 jobs:
   deploy:
-    uses: ActionsCI/reusable-workflows/.github/workflows/build-eks.yaml@main
+    uses: ActionsCI/reusable-workflows/.github/workflows/build-eks.yaml
     secrets: inherit`
 
 const SECRETS_TEXT = `# GitHub Actions secrets required:
