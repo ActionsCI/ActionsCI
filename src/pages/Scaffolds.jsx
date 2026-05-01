@@ -39,7 +39,7 @@ const AGENTS_EXAMPLE = `# AGENTS.md — repo root
 - Semver is computed automatically from conventional commits`
 
 const steps = [
-  'Click "Use this template" on GitHub',
+  'Clone the scaffold from GitHub',
   'Replace placeholder service names in AGENTS.md',
   'Update cicd.yaml with your registry, cluster, and chart values',
   'Point your agent at the root AGENTS.md',
@@ -59,7 +59,7 @@ export default function Scaffolds() {
               Scaffold Repos
             </p>
             <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: 'var(--text)' }}>
-              Fork a scaffold. Hand it to your agent. Ship.
+              Clone a scaffold. Hand it to your agent. Ship.
             </h1>
             <p className="text-base max-w-xl" style={{ color: 'var(--text-muted)' }}>
               GitHub template repos pre-wired with AGENTS.md layers, cicd.yaml, and ActionsCI
@@ -83,7 +83,7 @@ export default function Scaffolds() {
               institutional context, a <code className="font-mono text-xs px-1 rounded" style={{ background: 'var(--code-bg)', color: 'var(--green)' }}>cicd.yaml</code> that
               drives the entire pipeline, and ActionsCI workflow callers already in{' '}
               <code className="font-mono text-xs px-1 rounded" style={{ background: 'var(--code-bg)', color: 'var(--text-muted)' }}>.github/workflows/</code>.
-              Fork it, customize the config, and you're shipping — not configuring.
+              Clone it, customize the config, and you're shipping — not configuring.
             </p>
           </SectionReveal>
         </section>
@@ -187,7 +187,7 @@ export default function Scaffolds() {
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md text-sm font-semibold transition-all duration-150 hover:opacity-90"
               style={{ background: 'var(--accent)', color: 'var(--accent-fg)' }}
             >
-              Use node-agentic-scaffold template
+              Clone node-agentic-scaffold
               <ExternalLink size={13} />
             </a>
           </SectionReveal>

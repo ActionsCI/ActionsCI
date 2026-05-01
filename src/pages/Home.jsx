@@ -332,7 +332,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-5 py-20">
           <SectionReveal>
             <h2 className="text-2xl md:text-3xl font-bold mb-2" style={{ color: 'var(--text)' }}>
-              Fork a scaffold. Hand it to your agent. Ship.
+              Clone a scaffold. Hand it to your agent. Ship.
             </h2>
             <p className="text-base" style={{ color: 'var(--text-muted)' }}>
               Template repos pre-wired with AGENTS.md, cicd.yaml, and ActionsCI workflows. Clone and go.
@@ -357,7 +357,7 @@ export default function Home() {
           <SectionReveal delay={0.15} className="mt-6">
             <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
               More scaffold repos coming. Each one demonstrates a real production pattern — not toy examples.
-              Fork, customize the AGENTS.md for your team's rules, and you're running.
+              Clone, customize the AGENTS.md for your team's rules, and you're running.
             </p>
           </SectionReveal>
         </div>

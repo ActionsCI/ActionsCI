@@ -85,7 +85,7 @@ export default function Docs() {
               Get up and running.
             </h1>
             <p className="text-base max-w-xl" style={{ color: 'var(--text-muted)' }}>
-              Add ActionsCI to an existing repo or fork a scaffold. Either way, your first
+              Add ActionsCI to an existing repo or clone a scaffold. Either way, your first
               pipeline runs in minutes.
             </p>
           </motion.div>
@@ -194,7 +194,7 @@ export default function Docs() {
                 Step 4 (Optional): Use a scaffold
               </h2>
               <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-                Fork a scaffold repo instead of steps 1–2. The scaffold ships with{' '}
+                Clone a scaffold repo instead of steps 1–2. The scaffold ships with{' '}
                 <code className="font-mono text-xs px-1 rounded" style={{ background: 'var(--code-bg)', color: 'var(--green)' }}>cicd.yaml</code>,
                 {' '}<code className="font-mono text-xs px-1 rounded" style={{ background: 'var(--code-bg)', color: 'var(--text-muted)' }}>.github/workflows/deploy.yaml</code>,
                 {' '}and layered <code className="font-mono text-xs px-1 rounded" style={{ background: 'var(--code-bg)', color: 'var(--accent)' }}>AGENTS.md</code>{' '}
