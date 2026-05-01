@@ -14,7 +14,7 @@ GitHub Actions workflow callers for the ActionsCI website repo. All workflows ca
 
 1. **Callers only — no inline steps.** Workflow files here must use `jobs.<id>.uses:` to call a reusable workflow. Do not write `jobs.<id>.steps:` with inline `run:` commands. If new logic is needed, it belongs in `ActionsCI/reusable-workflows`, not here.
 
-2. **No `@main` or mutable refs.** This applies to the workflow callers themselves. Reference reusable workflows without a ref (letting the org's default branch resolve) or pin to a SHA — never `@main`, `@master`, or a mutable tag.
+2. **Pin to a commit SHA — no mutable refs.** Always reference reusable workflows at a specific 40-character commit SHA. Never use `@main`, `@master`, or a mutable tag. When a new release is cut, update the SHA to the latest tagged release commit.
 
 3. **`secrets: inherit` is the correct pattern.** Pass secrets to reusable workflows via `secrets: inherit`. Do not enumerate secrets individually unless the reusable workflow explicitly requires named inputs.
 

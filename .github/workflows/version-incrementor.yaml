@@ -10,5 +10,5 @@ permissions:
 
 jobs:
   version:
-    uses: ActionsCI/reusable-workflows/.github/workflows/version-incrementor.yaml
+    uses: ActionsCI/reusable-workflows/.github/workflows/version-incrementor.yaml@a22e31046645c43f004550e02c8d5b553ab7cb51
     secrets: inherit
