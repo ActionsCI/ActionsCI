@@ -1,544 +1,436 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ChevronDown, ArrowRight, Github } from 'lucide-react'
-import Terminal from '../components/Terminal'
-import FeatureCard from '../components/FeatureCard'
-import TemplateCard from '../components/TemplateCard'
-import StepConnector from '../components/StepConnector'
-import PricingCard from '../components/PricingCard'
+import { ExternalLink, ChevronDown } from 'lucide-react'
 import CodeBlock from '../components/CodeBlock'
+import FileTree from '../components/FileTree'
+import ScaffoldCard from '../components/ScaffoldCard'
+import SectionReveal from '../components/SectionReveal'
 
-const stats = [
-  { icon: '⚡', value: '< 5 min', label: 'From clone to deployed' },
-  { icon: '📦', value: '20+', label: 'Prebuilt workflow templates' },
-  { icon: '🤖', value: 'Agent-ready', label: 'Works with Claude, Copilot, Cursor' },
-  { icon: '🚀', value: 'Zero config', label: 'Convention over configuration' },
+/* ── Copy constants ─────────────────────────────────────────────── */
+
+const CICD_YAML = `# cicd.yaml — drop this in your repo root
+
+service: my-api
+image:
+  repository: 123456789.dkr.ecr.us-east-1.amazonaws.com/my-api
+  tag: latest
+
+chart:
+  name: my-api
+  repository: oci://123456789.dkr.ecr.us-east-1.amazonaws.com/charts
+
+deploy:
+  cluster: production
+  namespace: default`
+
+const CALLER_WORKFLOW = `# .github/workflows/deploy.yaml
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    uses: ActionsCI/reusable-workflows/.github/workflows/build-eks.yaml
+    secrets: inherit
+    with:
+      environment: production`
+
+const SHA_PINNING = `# What you see in ActionsCI workflows:
+
+- uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4.3.0
+- uses: docker/setup-buildx-action@b5730e08a8eb7b2671c4e45d8d0b7e7e3a99f58c  # v3.10.0
+
+# Not this:
+- uses: actions/checkout@v4          # mutable tag
+- uses: docker/setup-buildx-action@main  # moving ref`
+
+const workflows = [
+  { name: 'build-eks.yaml', desc: 'Full orchestration: docker build/push → Helm package/push → GitOps deploy' },
+  { name: 'build-eks-pr-test.yaml', desc: 'PR smoke gate — runs your build against a throwaway branch before merge' },
+  { name: 'pre-build.yaml', desc: 'Parses cicd.yaml, computes image and chart versions' },
+  { name: 'docker-build-push.yaml', desc: 'Build and push container images to ECR' },
+  { name: 'docker-build-test.yaml', desc: 'Credential-free PR gate — builds the Dockerfile without pushing' },
+  { name: 'helm-package-push.yaml', desc: 'Package and publish Helm charts to ECR' },
+  { name: 'service-deployment-gitops.yaml', desc: 'Updates Chart.yaml in a GitOps repo' },
+  { name: 'gcp-cloudrun-deploy.yaml', desc: 'Deploy to GCP Cloud Run' },
+  { name: 'compute-next-semver.yaml', desc: 'Automatic semantic version calculation' },
+  { name: 'success-check.yaml', desc: 'Aggregate job conclusions for branch protection' },
 ]
 
-const features = [
-  {
-    icon: '🔁',
-    title: 'Reusable Workflows',
-    description: 'Prebuilt, composable GitHub Actions you can call like functions. No copy-paste boilerplate across repos — just reference and go.',
-  },
-  {
-    icon: '📄',
-    title: 'agent.md Convention',
-    description: 'Drop an agent.md in your repo and your AI coding agent instantly understands your workflow setup. Cursor, Claude Code, Copilot — they all speak it.',
-  },
-  {
-    icon: '🏗️',
-    title: 'Scaffold Repos',
-    description: 'Spin up a fully wired project in seconds with our scaffold templates. Node, Vite, full-stack — pick your flavor and start building, not configuring.',
-  },
-  {
-    icon: '⚡',
-    title: 'Deploy in Minutes',
-    description: 'From zero to Vercel or Netlify in under 5 minutes. Preconfigured deploy hooks, preview environments, and branch strategies included.',
-  },
-  {
-    icon: '⚙️',
-    title: 'Zero-DevOps Config',
-    description: 'One YAML file is all it takes. ActionsCI uses sensible defaults and conventions so your team focuses on features, not infrastructure.',
-  },
-  {
-    icon: '🤖',
-    title: 'Agent-First Design',
-    description: 'Built for the age of AI-assisted development. Your agents can discover, configure, and trigger workflows without human hand-holding.',
-  },
-]
-
-const templates = [
-  {
-    icon: '📦',
-    name: 'node-vite-starter',
-    stack: 'React + Vite + Tailwind',
-    badge: 'Vercel deploy ready',
-    href: 'https://github.com/actionsci/node-vite-starter',
-  },
-  {
-    icon: '📦',
-    name: 'node-next-starter',
-    stack: 'Next.js 14 + App Router',
-    badge: 'Vercel deploy ready',
-    href: 'https://github.com/actionsci/node-next-starter',
-  },
-  {
-    icon: '📦',
-    name: 'node-api-starter',
-    stack: 'Express + TypeScript',
-    badge: 'Netlify Functions ready',
-    href: 'https://github.com/actionsci/node-api-starter',
-  },
-  {
-    icon: '📦',
-    name: 'fullstack-starter',
-    stack: 'Next.js + Prisma + Postgres',
-    badge: 'Vercel + Neon ready',
-    href: 'https://github.com/actionsci/fullstack-starter',
-  },
-]
-
-const deploySteps = [
-  { num: '01', label: 'Clone a scaffold repo' },
-  { num: '02', label: 'Run npx actionci init' },
-  { num: '03', label: 'Push to GitHub' },
-  { num: '04', label: 'Connect Vercel or Netlify (one click)' },
-  { num: '05', label: 'Merge to main → live in production' },
-]
-
-const pricingTiers = [
-  {
-    tier: 'Free',
-    price: '$0',
-    period: '/mo',
-    features: ['Public repos', '3 workflow templates', 'Community support'],
-    cta: 'Get started',
-    ctaHref: '/docs',
-  },
-  {
-    tier: 'Pro',
-    price: '$X',
-    period: '/mo',
-    features: ['Private repos', 'All templates', 'agent.md generator', 'Priority support'],
-    cta: 'Start free trial',
-    ctaHref: '/docs',
-    highlight: true,
-  },
-  {
-    tier: 'Team',
-    price: '$X',
-    period: '/seat/mo',
-    features: ['Everything in Pro', 'SSO + audit logs', 'Custom workflows', 'Dedicated onboarding'],
-    cta: 'Talk to us',
-    ctaHref: '#',
-  },
-]
-
-const agentMdCode = `# agent.md — ActionsCI config
-
-project: my-vite-app
-stack: node20 + vite + react
-
-workflows:
-  ci:
-    trigger: push, pull_request
-    steps: [lint, typecheck, test, build]
-
-  deploy-preview:
-    trigger: pull_request
-    target: vercel
-    env: preview
-
-  deploy-production:
-    trigger: push(main)
-    target: vercel
-    env: production
-
-scaffold: actionci/node-vite-starter
-docs: https://actionci.dev/docs`
-
-const fadeUp = {
-  initial: { opacity: 0, y: 30 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: '-60px' },
-  transition: { duration: 0.6 },
-}
+/* ── Component ──────────────────────────────────────────────────── */
 
 export default function Home() {
   return (
-    <div>
-      {/* ── Section 1: Hero ─────────────────────────────────────── */}
+    <div style={{ background: 'var(--bg)' }}>
+
+      {/* ── Hero ─────────────────────────────────────────────────── */}
       <section
-        className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 pt-24 pb-16 dot-grid overflow-hidden"
+        className="relative min-h-screen flex items-center diagonal-grid pt-14"
         style={{ background: 'var(--bg)' }}
       >
-        {/* Radial glow behind content */}
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background: 'radial-gradient(ellipse 60% 50% at 50% 40%, rgba(0,255,136,0.06) 0%, transparent 70%)',
-          }}
-        />
+        {/* subtle vignette over the grid */}
+        <div className="pointer-events-none absolute inset-0"
+          style={{ background: 'radial-gradient(ellipse 80% 70% at 50% 40%, var(--bg) 30%, transparent 100%)' }} />
 
-        <div className="relative z-10 max-w-3xl mx-auto">
-          <motion.span
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-block text-xs font-mono tracking-widest uppercase px-3 py-1.5 rounded-full mb-6"
-            style={{
-              color: 'var(--accent)',
-              border: '1px solid rgba(0,255,136,0.3)',
-              background: 'rgba(0,255,136,0.07)',
-            }}
-          >
-            GitHub Actions, reinvented for agent-driven teams
-          </motion.span>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-5xl md:text-7xl font-mono font-bold leading-tight tracking-tight mb-6"
-            style={{ color: 'var(--text)' }}
-          >
-            Ship product.<br />
-            <span style={{ color: 'var(--accent)' }}>Not pipelines.</span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-lg leading-relaxed mb-10 max-w-xl mx-auto"
-            style={{ color: 'var(--muted)' }}
-          >
-            ActionsCI is a library of reusable GitHub Actions workflows —
-            easy to consume, simple to configure, and designed for teams
-            that want to move fast without becoming DevOps experts.
-            One file. One command. Deployed.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-14"
-          >
-            <Link
-              to="/docs"
-              className="px-6 py-3 rounded font-mono font-bold text-sm transition-all duration-200 hover:opacity-90 hover:scale-105"
-              style={{ background: 'var(--accent)', color: '#0a0a0a' }}
+        <div className="relative z-10 max-w-6xl mx-auto px-5 w-full py-20 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          {/* Left */}
+          <div>
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
             >
-              Get Started →
-            </Link>
-            <a
-              href="https://github.com/actionsci"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-6 py-3 rounded font-mono text-sm transition-all duration-200 hover:border-white"
-              style={{ border: '1px solid var(--border)', color: 'var(--text)' }}
-            >
-              <Github size={15} />
-              View on GitHub ↗
-            </a>
-          </motion.div>
+              <span
+                className="inline-block text-xs font-mono tracking-widest uppercase px-2.5 py-1 rounded mb-6"
+                style={{
+                  color: 'var(--accent)',
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface)',
+                }}
+              >
+                GitHub Actions · Reusable · Agent-Ready
+              </span>
+            </motion.div>
 
+            <motion.h1
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.08 }}
+              className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight mb-5"
+              style={{ color: 'var(--text)' }}
+            >
+              CI/CD that gets<br />
+              <span style={{ color: 'var(--accent)' }}>out of your way.</span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.16 }}
+              className="text-base md:text-lg leading-relaxed mb-8 max-w-lg"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              ActionsCI publishes reusable GitHub Actions workflows your team
+              actually wants to use. One config file. Composable actions.
+              Scaffold repos your agents can read and run with immediately.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.24 }}
+              className="flex flex-wrap gap-3"
+            >
+              <Link
+                to="/workflows"
+                className="px-5 py-2.5 rounded-md text-sm font-semibold transition-all duration-150 hover:opacity-90"
+                style={{ background: 'var(--accent)', color: 'var(--accent-fg)' }}
+              >
+                Browse Workflows →
+              </Link>
+              <Link
+                to="/scaffolds"
+                className="px-5 py-2.5 rounded-md text-sm font-semibold transition-all duration-150"
+                style={{
+                  color: 'var(--text)',
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface)',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)' }}
+              >
+                Explore Scaffolds →
+              </Link>
+            </motion.div>
+          </div>
+
+          {/* Right — hero code block */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <Terminal />
+            <CodeBlock
+              code={CICD_YAML}
+              filename="cicd.yaml — your entire pipeline config"
+              accentBorder
+            />
           </motion.div>
         </div>
 
-        {/* Scroll indicator */}
-        <div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 bounce-y"
-          style={{ color: 'var(--muted)' }}
-          aria-hidden="true"
-        >
-          <ChevronDown size={20} />
+        {/* Scroll cue */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bounce-y" style={{ color: 'var(--text-muted)' }} aria-hidden="true">
+          <ChevronDown size={18} />
         </div>
       </section>
 
-      {/* ── Section 2: Stats Bar ─────────────────────────────────── */}
-      <section style={{ background: 'var(--surface)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
-        <div className="max-w-7xl mx-auto px-6 py-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, i) => (
+      {/* ── How It Works ─────────────────────────────────────────── */}
+      <section style={{ background: 'var(--bg-subtle)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+        <div className="max-w-6xl mx-auto px-5 py-20">
+          <SectionReveal>
+            <h2 className="text-2xl md:text-3xl font-bold mb-2" style={{ color: 'var(--text)' }}>
+              Convention over configuration.
+            </h2>
+          </SectionReveal>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-10">
+            {[
+              {
+                num: '1',
+                title: 'Reference a workflow',
+                body: "In your repo's .github/workflows/, call an ActionsCI reusable workflow with uses:. Pass your cicd.yaml values as inputs. That's the entire integration.",
+              },
+              {
+                num: '2',
+                title: 'Configure once',
+                body: 'Your cicd.yaml lives in the repo root and drives everything — image names, chart versions, cluster targets. Change config, not workflow code.',
+              },
+              {
+                num: '3',
+                title: 'Ship on merge',
+                body: 'Push to main. The workflow handles docker build/push, Helm packaging, semver bumping, and GitOps deployment. Your team reviews code, not pipeline YAML.',
+              },
+            ].map((step, i) => (
+              <SectionReveal key={step.num} delay={i * 0.1}>
+                <div
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold mb-4"
+                  style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--accent)' }}
+                >
+                  {step.num}
+                </div>
+                <h3 className="text-base font-semibold mb-2" style={{ color: 'var(--text)' }}>{step.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>{step.body}</p>
+              </SectionReveal>
+            ))}
+          </div>
+
+          <SectionReveal delay={0.3} className="mt-12">
+            <CodeBlock code={CALLER_WORKFLOW} filename=".github/workflows/deploy.yaml" />
+            <p className="text-sm mt-3 italic" style={{ color: 'var(--text-muted)' }}>
+              "That's the entire caller workflow. The complexity lives in ActionsCI — not in your repo."
+            </p>
+          </SectionReveal>
+        </div>
+      </section>
+
+      {/* ── Workflow Library ──────────────────────────────────────── */}
+      <section style={{ background: 'var(--bg)' }}>
+        <div className="max-w-6xl mx-auto px-5 py-20">
+          <SectionReveal>
+            <h2 className="text-2xl md:text-3xl font-bold mb-2" style={{ color: 'var(--text)' }}>
+              Every workflow your team needs.
+            </h2>
+            <p className="text-base" style={{ color: 'var(--text-muted)' }}>
+              Prebuilt, maintained, and pinned to immutable commit SHAs for supply-chain safety.
+            </p>
+          </SectionReveal>
+
+          {/* Grid table */}
+          <div
+            className="mt-10 rounded-lg overflow-hidden"
+            style={{ border: '1px solid var(--border)' }}
+          >
+            {workflows.map((wf, i) => (
               <motion.div
-                key={stat.value}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                key={wf.name}
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.1 }}
-                className="flex flex-col gap-1 items-center md:items-start text-center md:text-left"
+                transition={{ duration: 0.3, delay: i * 0.04 }}
+                className="grid grid-cols-1 md:grid-cols-5 gap-4 px-5 py-4 items-center"
+                style={{
+                  borderBottom: i < workflows.length - 1 ? '1px solid var(--border)' : 'none',
+                  background: i % 2 === 0 ? 'var(--bg)' : 'var(--bg-subtle)',
+                }}
               >
-                <span className="text-xl mb-1">{stat.icon}</span>
-                <span className="font-mono font-bold text-lg" style={{ color: 'var(--accent)' }}>
-                  {stat.value}
-                </span>
-                <span className="text-sm" style={{ color: 'var(--muted)' }}>{stat.label}</span>
+                <div className="md:col-span-2">
+                  <code
+                    className="text-xs font-mono px-2 py-0.5 rounded"
+                    style={{ background: 'var(--code-bg)', color: 'var(--accent)', border: '1px solid var(--border)' }}
+                  >
+                    {wf.name}
+                  </code>
+                </div>
+                <div className="md:col-span-3 text-sm" style={{ color: 'var(--text-muted)' }}>
+                  {wf.desc}
+                </div>
               </motion.div>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* ── Section 3: How It Works ──────────────────────────────── */}
-      <section className="py-24 px-6" style={{ background: 'var(--bg)' }}>
-        <div className="max-w-5xl mx-auto">
-          <motion.div {...fadeUp} className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-mono font-bold mb-3" style={{ color: 'var(--text)' }}>
-              How ActionsCI works
-            </h2>
-            <p className="text-base" style={{ color: 'var(--muted)' }}>
-              Three steps from idea to production.
-            </p>
-          </motion.div>
-
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-0">
-            {[
-              {
-                num: '01',
-                title: 'Pick a template',
-                body: 'Browse scaffold repos for your stack (Node, Vite, Next.js, etc.). Clone or let your AI agent pull it automatically via agent.md.',
-              },
-              null,
-              {
-                num: '02',
-                title: 'Configure once',
-                body: 'Drop a single YAML config file into your repo. No deep CI/CD knowledge required. ActionsCI reads your intent and wires up the right workflows automatically.',
-              },
-              null,
-              {
-                num: '03',
-                title: 'Ship',
-                body: 'Push to main. Your pipeline runs. Deploy to Netlify or Vercel with a single merge — no manual steps, no ops tickets, no waiting.',
-              },
-            ].map((item, i) => {
-              if (!item) return <StepConnector key={`connector-${i}`} />
-              return (
-                <motion.div
-                  key={item.num}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-40px' }}
-                  transition={{ duration: 0.5, delay: i * 0.15 }}
-                  className="flex-1 flex flex-col gap-3 md:max-w-xs"
-                >
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center font-mono font-bold text-sm"
-                    style={{ background: 'rgba(0,255,136,0.1)', border: '1px solid rgba(0,255,136,0.3)', color: 'var(--accent)' }}
-                  >
-                    {item.num}
-                  </div>
-                  <h3 className="font-mono font-bold text-base" style={{ color: 'var(--text)' }}>{item.title}</h3>
-                  <p className="text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>{item.body}</p>
-                </motion.div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Section 4: Feature Highlights ───────────────────────── */}
-      <section id="features" className="py-24 px-6" style={{ background: 'var(--surface)' }}>
-        <div className="max-w-6xl mx-auto">
-          <motion.div {...fadeUp} className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-mono font-bold mb-3" style={{ color: 'var(--text)' }}>
-              Everything your team needs.
-            </h2>
-            <p className="text-base" style={{ color: 'var(--muted)' }}>Nothing they don't.</p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {features.map((f, i) => (
-              <FeatureCard key={f.title} {...f} delay={i * 0.08} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Section 5: Agent.md Deep Dive ───────────────────────── */}
-      <section className="py-24 px-6" style={{ background: 'var(--bg)' }}>
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 items-start">
-            {/* Left prose */}
-            <motion.div {...fadeUp}>
-              <h2 className="text-3xl md:text-4xl font-mono font-bold mb-3" style={{ color: 'var(--text)' }}>
-                Your AI agent already knows what to do.
-              </h2>
-              <p className="text-base mb-6" style={{ color: 'var(--muted)' }}>
-                agent.md is a plain-text convention that tells any coding agent exactly how your CI/CD is wired.
-              </p>
-              <div className="space-y-5 text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>
-                <p>
-                  When you use ActionsCI, we write an <span className="font-mono" style={{ color: 'var(--accent)' }}>agent.md</span> file
-                  into your repo root. This file acts as a living README for your pipeline — describing what workflows
-                  exist, how to trigger them, what secrets are needed, and how to deploy.
-                </p>
-                <p>
-                  Claude Code, Cursor, GitHub Copilot Workspace — any agent that reads your repo gets instant context.
-                  No onboarding. No tribal knowledge. Your pipeline becomes self-documenting.
-                </p>
-                <p>
-                  Teams ship faster because nobody has to explain "how CI works here" ever again.
-                </p>
-              </div>
-            </motion.div>
-
-            {/* Right code block */}
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: '-60px' }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <CodeBlock code={agentMdCode} language="yaml" />
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Section 6: Templates ─────────────────────────────────── */}
-      <section className="py-24 px-6" style={{ background: 'var(--surface)' }}>
-        <div className="max-w-6xl mx-auto">
-          <motion.div {...fadeUp} className="mb-12">
-            <h2 className="text-3xl md:text-4xl font-mono font-bold mb-3" style={{ color: 'var(--text)' }}>
-              Start from a repo, not from scratch.
-            </h2>
-            <p className="text-base" style={{ color: 'var(--muted)' }}>
-              Hand your agent a scaffold. Be in production before lunch.
-            </p>
-          </motion.div>
-
-          <div className="flex gap-5 overflow-x-auto pb-4" style={{ scrollbarWidth: 'none' }}>
-            {templates.map((t, i) => (
-              <TemplateCard key={t.name} {...t} delay={i * 0.1} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Section 7: DevOps Philosophy ────────────────────────── */}
-      <section className="py-24 px-6" style={{ background: 'var(--bg)' }}>
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div {...fadeUp}>
-            <h2 className="text-3xl md:text-4xl font-mono font-bold mb-3" style={{ color: 'var(--text)' }}>
-              Built on the shoulders of giants.
-            </h2>
-            <p className="text-base mb-12" style={{ color: 'var(--muted)' }}>
-              We took the principles from The DevOps Handbook and Accelerate — and made them accessible to every team.
-            </p>
-          </motion.div>
-
-          <motion.blockquote
-            initial={{ opacity: 0, scale: 0.97 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-xl md:text-2xl font-mono font-bold leading-snug mb-12 px-4 py-8 rounded-lg"
-            style={{
-              color: 'var(--accent)',
-              borderLeft: '3px solid var(--accent)',
-              textAlign: 'left',
-              background: 'rgba(0,255,136,0.04)',
-            }}
-          >
-            "The goal of DevOps isn't better pipelines.
-            It's faster feedback, higher trust, and more time
-            building things that matter."
-          </motion.blockquote>
-
-          <motion.div
-            {...fadeUp}
-            className="grid md:grid-cols-3 gap-6 text-left mb-12"
-          >
-            {[
-              'The research is clear — teams that invest in deployment automation, trunk-based development, and short feedback loops ship more, break less, and burn out less. ActionsCI operationalizes these principles out of the box.',
-              'We believe CI/CD should be a commodity, not a competitive differentiator. Your team\'s edge is your product. So we handle the pipelines so you don\'t have to think about them.',
-              'Whether you\'re a solo founder or a team of 50, ActionsCI gives you the workflow foundation of a mature engineering org — on day one.',
-            ].map((para, i) => (
-              <p key={i} className="text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>
-                {para}
-              </p>
-            ))}
-          </motion.div>
-
-          <motion.div
-            {...fadeUp}
-            className="flex flex-wrap justify-center gap-3"
-          >
-            {['Based on: Accelerate (DORA metrics)', 'The DevOps Handbook', 'Trunk-Based Development'].map(badge => (
-              <span
-                key={badge}
-                className="text-xs font-mono px-3 py-1.5 rounded"
-                style={{ border: '1px solid var(--border)', color: 'var(--muted)' }}
-              >
-                {badge}
-              </span>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ── Section 8: Deploy Speed CTA ─────────────────────────── */}
-      <section className="py-24 px-6" style={{ background: 'var(--surface)' }}>
-        <div className="max-w-2xl mx-auto text-center">
-          <motion.div {...fadeUp}>
-            <h2 className="text-3xl md:text-5xl font-mono font-bold mb-4" style={{ color: 'var(--text)' }}>
-              Zero to deployed.<br />
-              <span style={{ color: 'var(--accent)' }}>Under 5 minutes.</span>
-            </h2>
-          </motion.div>
-
-          <motion.ol
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="mt-10 mb-10 space-y-3 text-left"
-          >
-            {deploySteps.map((step, i) => (
-              <motion.li
-                key={step.num}
-                initial={{ opacity: 0, x: -10 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: 0.1 * i }}
-                className="flex items-center gap-4 font-mono text-base"
-                style={{ color: 'var(--text)' }}
-              >
-                <span className="text-sm font-bold" style={{ color: 'var(--accent)' }}>{step.num}</span>
-                <span>{step.label}</span>
-              </motion.li>
-            ))}
-          </motion.ol>
-
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: 0.5 }}
-          >
-            <Link
-              to="/docs"
-              className="block w-full sm:inline-block sm:w-auto px-8 py-4 rounded font-mono font-bold text-base transition-all duration-200 hover:opacity-90 hover:scale-105"
-              style={{ background: 'var(--accent)', color: '#0a0a0a' }}
-            >
-              Start for free →
-            </Link>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ── Section 9: Pricing Teaser ────────────────────────────── */}
-      <section className="py-24 px-6" style={{ background: 'var(--bg)' }}>
-        <div className="max-w-5xl mx-auto">
-          <motion.div {...fadeUp} className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-mono font-bold mb-3" style={{ color: 'var(--text)' }}>
-              Simple pricing for every team.
-            </h2>
-            <Link
-              to="/pricing"
-              className="text-sm font-mono transition-colors hover:underline"
+          <SectionReveal delay={0.1} className="mt-6">
+            <a
+              href="https://github.com/ActionsCI/reusable-workflows"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-medium transition-colors hover:underline"
               style={{ color: 'var(--accent)' }}
             >
-              See full pricing →
-            </Link>
-          </motion.div>
+              View all workflows on GitHub ↗
+              <ExternalLink size={13} />
+            </a>
+          </SectionReveal>
+        </div>
+      </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {pricingTiers.map((tier, i) => (
-              <PricingCard key={tier.tier} {...tier} delay={i * 0.1} />
-            ))}
+      {/* ── AGENTS.md ─────────────────────────────────────────────── */}
+      <section style={{ background: 'var(--bg-subtle)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+        <div className="max-w-6xl mx-auto px-5 py-20">
+          <SectionReveal>
+            <h2 className="text-2xl md:text-3xl font-bold mb-3" style={{ color: 'var(--text)' }}>
+              Your AI agent already knows how to work here.
+            </h2>
+          </SectionReveal>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mt-10 items-start">
+            {/* Left prose */}
+            <SectionReveal>
+              <div className="space-y-4 text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                <p>
+                  ActionsCI scaffold repos ship with layered <code className="font-mono text-xs px-1 py-0.5 rounded" style={{ background: 'var(--code-bg)', color: 'var(--accent)' }}>AGENTS.md</code> files —
+                  a plain-text convention that gives AI coding agents
+                  (Claude Code, Cursor, Copilot Workspace) the same context
+                  a senior engineer would have after six months in the codebase.
+                </p>
+                <p>
+                  Root <code className="font-mono text-xs px-1 py-0.5 rounded" style={{ background: 'var(--code-bg)', color: 'var(--accent)' }}>AGENTS.md</code> sets org-wide golden rules. Service-level
+                  AGENTS.md files add local constraints. Rules cascade
+                  downward — a service can add stricter rules, never looser ones.
+                </p>
+                <p>
+                  Your agent reads the repo, reads the AGENTS.md files,
+                  and knows exactly what to touch and what to leave alone.
+                  No onboarding session. No "how does CI work here?"
+                  The repo tells them.
+                </p>
+              </div>
+
+              <blockquote
+                className="mt-8 text-base italic leading-relaxed"
+                style={{
+                  color: 'var(--accent)',
+                  borderLeft: '3px solid var(--accent)',
+                  paddingLeft: '1rem',
+                }}
+              >
+                "AGENTS.md is institutional memory for AI agents. It captures the lessons your team
+                learned the hard way — and makes them available to every agent session automatically."
+              </blockquote>
+            </SectionReveal>
+
+            {/* Right file tree */}
+            <FileTree />
           </div>
         </div>
       </section>
+
+      {/* ── Scaffold Repos ────────────────────────────────────────── */}
+      <section style={{ background: 'var(--bg)' }}>
+        <div className="max-w-6xl mx-auto px-5 py-20">
+          <SectionReveal>
+            <h2 className="text-2xl md:text-3xl font-bold mb-2" style={{ color: 'var(--text)' }}>
+              Clone a scaffold. Hand it to your agent. Ship.
+            </h2>
+            <p className="text-base" style={{ color: 'var(--text-muted)' }}>
+              Template repos pre-wired with AGENTS.md, cicd.yaml, and ActionsCI workflows. Clone and go.
+            </p>
+          </SectionReveal>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-10">
+            <ScaffoldCard
+              name="node-agentic-scaffold"
+              href="https://github.com/ActionsCI/node-agentic-scaffold"
+              description="Node.js monorepo scaffold with layered AGENTS.md, SPEC.md template, and PR checklist — production-pattern for AI-assisted development."
+              delay={0}
+            />
+            <ScaffoldCard
+              name="django-angular-boilerplate"
+              href="https://github.com/ActionsCI/django-angular-boilerplate"
+              description="Django + Angular full-stack scaffold with ActionsCI workflows pre-wired for EKS deployment."
+              delay={0.1}
+            />
+          </div>
+
+          <SectionReveal delay={0.15} className="mt-6">
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              More scaffold repos coming. Each one demonstrates a real production pattern — not toy examples.
+              Clone, customize the AGENTS.md for your team's rules, and you're running.
+            </p>
+          </SectionReveal>
+        </div>
+      </section>
+
+      {/* ── Supply-Chain Safety ───────────────────────────────────── */}
+      <section style={{ background: 'var(--bg-subtle)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+        <div className="max-w-6xl mx-auto px-5 py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+            {/* Left */}
+            <SectionReveal>
+              <h2 className="text-2xl md:text-3xl font-bold mb-6" style={{ color: 'var(--text)' }}>
+                Every third-party action pinned to a commit SHA.
+              </h2>
+              <div className="space-y-4 text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                <p>
+                  Tags are mutable. A compromised upstream can silently re-point{' '}
+                  <code className="font-mono text-xs px-1 rounded" style={{ background: 'var(--code-bg)', color: 'var(--code-text)' }}>@v4</code> to
+                  arbitrary code, and every consumer picks it up on the next run.
+                </p>
+                <p>
+                  The tj-actions/changed-files compromise in March 2025 affected tens of
+                  thousands of repos pinned to a tag.
+                </p>
+                <p>
+                  ActionsCI pins all third-party actions to a 40-character commit SHA.
+                  The code you reviewed is the code that runs. Always.
+                </p>
+              </div>
+            </SectionReveal>
+
+            {/* Right */}
+            <motion.div
+              initial={{ opacity: 0, x: 16 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: '-60px' }}
+              transition={{ duration: 0.4, delay: 0.15 }}
+            >
+              <CodeBlock code={SHA_PINNING} filename="Inside an ActionsCI workflow" />
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── DevOps Principles ────────────────────────────────────── */}
+      <section style={{ background: 'var(--bg)' }}>
+        <div className="max-w-3xl mx-auto px-5 py-20">
+          <SectionReveal>
+            <h2 className="text-2xl md:text-3xl font-bold mb-8" style={{ color: 'var(--text)' }}>
+              Built on what the research actually says.
+            </h2>
+            <div className="space-y-5 text-base leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+              <p>
+                The DORA research is clear: teams that invest in deployment automation and short
+                feedback loops ship more, break less, and burn out less. But most teams never get
+                there because standing up a compliant, secure, automated pipeline is itself a
+                significant project.
+              </p>
+              <p>
+                ActionsCI is that project — done once, shared with everyone. Your team gets a
+                mature engineering org's pipeline on day one. They spend their time on product,
+                not on infrastructure.
+              </p>
+              <p>
+                We follow trunk-based development, automate semver, enforce GitOps deploys, and
+                pin every dependency. The boring stuff done right so your team never has to think
+                about it.
+              </p>
+            </div>
+          </SectionReveal>
+        </div>
+      </section>
+
     </div>
   )
 }

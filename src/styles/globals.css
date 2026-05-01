@@ -1,17 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
+/* ── Light mode (default) ─────────────────────────────────────── */
 :root {
-  --bg:        #0a0a0a;
-  --surface:   #111111;
-  --border:    #1f1f1f;
-  --accent:    #00ff88;
-  --accent-2:  #ff6b35;
-  --text:      #f0f0f0;
-  --muted:     #6b6b6b;
-  --code-bg:   #0d1117;
+  --bg:          #ffffff;
+  --bg-subtle:   #f6f7f9;
+  --surface:     #f0f2f5;
+  --border:      #e1e4e8;
+  --accent:      #0969da;
+  --accent-fg:   #ffffff;
+  --green:       #1a7f37;
+  --text:        #1c2128;
+  --text-muted:  #656d76;
+  --code-bg:     #f6f8fa;
+  --code-text:   #24292f;
 }
 
-* {
+/* ── Dark mode ────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --bg:          #0d1117;
+  --bg-subtle:   #161b22;
+  --surface:     #21262d;
+  --border:      #30363d;
+  --accent:      #58a6ff;
+  --accent-fg:   #0d1117;
+  --green:       #3fb950;
+  --text:        #e6edf3;
+  --text-muted:  #8b949e;
+  --code-bg:     #161b22;
+  --code-text:   #e6edf3;
+}
+
+/* ── Reset & base ─────────────────────────────────────────────── */
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
@@ -22,92 +43,54 @@ html {
 body {
   background-color: var(--bg);
   color: var(--text);
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-h1, h2, h3, h4, h5, h6 {
-  font-family: 'Space Mono', monospace;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 code, pre, .font-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ── Diagonal grid texture ────────────────────────────────────── */
+.diagonal-grid {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 40px,
+    rgba(128, 128, 128, 0.04) 40px,
+    rgba(128, 128, 128, 0.04) 41px
+  );
+}
+
+/* ── File tree ────────────────────────────────────────────────── */
+.file-tree {
   font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  line-height: 1.8;
+  color: var(--text);
 }
 
-/* Dot grid texture for hero */
-.dot-grid {
-  background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
-  background-size: 28px 28px;
-}
-
-/* Terminal glow */
-.terminal-glow {
-  box-shadow: 0 0 30px rgba(0, 255, 136, 0.15), 0 0 60px rgba(0, 255, 136, 0.05);
-}
-
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: var(--bg);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--muted);
-}
-
-/* Cursor blink animation */
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-
-.cursor-blink {
-  animation: blink 1s step-end infinite;
-}
-
-/* Scroll bounce */
-@keyframes bounce-y {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(8px); }
-}
-
-.bounce-y {
-  animation: bounce-y 1.5s ease-in-out infinite;
-}
-
-/* Draw line animation */
-@keyframes draw-line {
-  from { width: 0; }
-  to { width: 100%; }
-}
-
-/* Step connector line */
-.step-line-animate {
-  animation: draw-line 1s ease-out forwards;
-}
-
-/* Accent text */
-.text-accent {
+.file-tree .hl-accent {
   color: var(--accent);
 }
 
-.text-accent-2 {
-  color: var(--accent-2);
+.file-tree .hl-muted {
+  color: var(--text-muted);
 }
 
-/* Surface backgrounds */
-.bg-surface {
-  background-color: var(--surface);
+/* ── Bounce animation ─────────────────────────────────────────── */
+@keyframes bounce-y {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(6px); }
 }
-
-.border-custom {
-  border-color: var(--border);
-}
+.bounce-y { animation: bounce-y 1.8s ease-in-out infinite; }
